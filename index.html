@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Montseny — Control del Proyecto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --forest-deep:#152019;
+    --forest-panel:#1c2a21;
+    --forest-mid:#2a3d30;
+    --forest-line:#33513f;
+    --moss:#7fa06b;
+    --parchment:#f2ead7;
+    --parchment-dim:#a9b3a2;
+    --crimson:#c0503a;
+    --amber:#d9a441;
+    --teal:#4f9088;
+    --violet:#8a8fc4;
+    --clay:#c1703f;
+    --hairline:rgba(242,234,215,0.12);
+    --card:#1a2620;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;background:var(--forest-deep);color:var(--parchment);font-family:'Inter',sans-serif;}
+  body{min-height:100vh;}
+  a{color:inherit;}
+
+  #app{display:flex;min-height:100vh;}
+
+  /* ---------- sidebar ---------- */
+  #nav{
+    width:236px;flex-shrink:0;background:var(--forest-panel);border-right:1px solid var(--hairline);
+    display:flex;flex-direction:column;padding:22px 14px;position:sticky;top:0;height:100vh;overflow-y:auto;
+  }
+  #nav .brand{padding:0 8px 20px 8px;}
+  #nav .brand h1{font-family:'Fraunces',serif;font-size:19px;font-weight:600;margin:0;line-height:1.25;}
+  #nav .brand span{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--moss);letter-spacing:0.4px;margin-top:5px;}
+  .nav-btn{
+    display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;font-size:13px;color:var(--parchment-dim);
+    cursor:pointer;margin-bottom:3px;transition:all .15s;border:1px solid transparent;
+  }
+  .nav-btn .ic{font-size:15px;width:18px;text-align:center;}
+  .nav-btn:hover{background:rgba(242,234,215,0.05);color:var(--parchment);}
+  .nav-btn.active{background:var(--moss);color:#101a12;font-weight:600;}
+  .nav-btn .badge{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(0,0,0,0.2);padding:1px 6px;border-radius:8px;}
+  .nav-btn.active .badge{background:rgba(0,0,0,0.18);}
+  #nav .spacer{flex:1;}
+  #earth-link{
+    display:flex;align-items:center;gap:9px;padding:12px;border-radius:9px;background:rgba(217,164,65,0.12);
+    border:1px solid rgba(217,164,65,0.35);color:var(--amber);text-decoration:none;font-size:12.5px;font-weight:600;
+    margin-top:10px;transition:all .15s;
+  }
+  #earth-link:hover{background:rgba(217,164,65,0.2);}
+  #data-tools{margin-top:14px;padding-top:14px;border-top:1px solid var(--hairline);}
+  #data-tools .eyebrow{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--parchment-dim);margin:0 0 8px 8px;}
+  .data-btn{
+    display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:8px;font-size:12.5px;color:var(--parchment-dim);
+    cursor:pointer;margin-bottom:4px;border:1px solid var(--hairline);background:transparent;width:100%;box-sizing:border-box;
+    font-family:'Inter',sans-serif;transition:all .15s;text-align:left;
+  }
+  .data-btn:hover{border-color:var(--moss);color:var(--parchment);}
+  #import-status{font-size:10.5px;font-family:'JetBrains Mono',monospace;color:var(--parchment-dim);margin-top:4px;padding:0 8px;min-height:14px;}
+
+  /* ---------- main ---------- */
+  #main{flex:1;padding:34px 42px;max-width:1180px;}
+  .view{display:none;}
+  .view.active{display:block;animation:fadein .25s ease;}
+  @keyframes fadein{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+  .view-head{margin-bottom:26px;}
+  .view-head h2{font-family:'Fraunces',serif;font-size:26px;font-weight:600;margin:0 0 6px 0;}
+  .view-head p{margin:0;color:var(--parchment-dim);font-size:13.5px;line-height:1.6;max-width:620px;}
+
+  /* ---------- summary cards ---------- */
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:30px;}
+  .stat-card{background:var(--card);border:1px solid var(--hairline);border-radius:12px;padding:18px 20px;}
+  .stat-card .num{font-family:'Fraunces',serif;font-size:32px;font-weight:600;line-height:1;}
+  .stat-card .lbl{font-size:12px;color:var(--parchment-dim);margin-top:8px;}
+  .stat-card .sub{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--parchment-dim);margin-top:4px;}
+
+  .section-title{font-family:'Fraunces',serif;font-size:16px;font-weight:600;margin:0 0 12px 0;display:flex;align-items:center;gap:8px;}
+
+  /* ---------- tables ---------- */
+  .table-wrap{background:var(--card);border:1px solid var(--hairline);border-radius:12px;overflow:hidden;margin-bottom:22px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{text-align:left;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.6px;text-transform:uppercase;color:var(--parchment-dim);padding:12px 14px;border-bottom:1px solid var(--hairline);font-weight:500;}
+  tbody td{padding:10px 14px;border-bottom:1px solid var(--hairline);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:rgba(242,234,215,0.025);}
+  .coord{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--parchment-dim);}
+  .maplink{font-size:11px;color:var(--teal);text-decoration:none;white-space:nowrap;}
+  .maplink:hover{text-decoration:underline;}
+
+  select, input[type=text], input[type=date], input[type=number], textarea{
+    background:rgba(0,0,0,0.22);border:1px solid var(--hairline);border-radius:6px;color:var(--parchment);
+    font-family:'Inter',sans-serif;font-size:12.5px;padding:6px 8px;width:100%;
+  }
+  select{cursor:pointer;}
+  textarea{resize:vertical;min-height:34px;}
+  input:focus, select:focus, textarea:focus{outline:1px solid var(--moss);}
+
+  .pill{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;}
+  .pill.pendiente{background:rgba(217,164,65,0.18);color:var(--amber);}
+  .pill.muestreado, .pill.hecha, .pill.instalado, .pill.disponible{background:rgba(127,160,107,0.2);color:var(--moss);}
+  .pill.mantenimiento, .pill.enuso{background:rgba(138,143,196,0.2);color:var(--violet);}
+  .pill.fuera{background:rgba(192,80,58,0.2);color:var(--crimson);}
+
+  .btn{border:none;border-radius:7px;padding:8px 14px;font-family:'Inter',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;}
+  .btn-primary{background:var(--moss);color:#101a12;}
+  .btn-primary:hover{filter:brightness(1.08);}
+  .btn-ghost{background:transparent;border:1px solid var(--hairline);color:var(--parchment-dim);}
+  .btn-ghost:hover{border-color:var(--moss);color:var(--parchment);}
+  .icon-btn{background:transparent;border:none;color:var(--parchment-dim);cursor:pointer;font-size:13px;padding:4px 6px;border-radius:5px;}
+  .icon-btn:hover{color:var(--crimson);background:rgba(192,80,58,0.1);}
+
+  .add-form{background:var(--card);border:1px dashed var(--hairline);border-radius:12px;padding:16px 18px;margin-bottom:22px;}
+  .add-form .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:10px;}
+  .add-form label{display:block;font-size:10.5px;color:var(--parchment-dim);margin-bottom:4px;font-family:'JetBrains Mono',monospace;letter-spacing:0.3px;}
+
+  .task-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media (max-width:760px){.task-col{grid-template-columns:1fr;}}
+  .task-card{background:var(--card);border:1px solid var(--hairline);border-radius:10px;padding:12px 14px;margin-bottom:10px;}
+  .task-card.done{opacity:0.6;}
+  .task-card .row{display:flex;align-items:flex-start;gap:10px;}
+  .task-card input[type=checkbox]{margin-top:3px;width:16px;height:16px;accent-color:var(--moss);cursor:pointer;flex-shrink:0;}
+  .task-card .title{font-size:13.5px;font-weight:500;}
+  .task-card.done .title{text-decoration:line-through;color:var(--parchment-dim);}
+  .task-card .desc{font-size:12px;color:var(--parchment-dim);margin-top:4px;line-height:1.5;}
+  .task-card .meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--parchment-dim);margin-top:6px;}
+  .task-card .top-row{display:flex;justify-content:space-between;align-items:flex-start;flex:1;}
+
+  #empty{padding:22px;text-align:center;color:var(--parchment-dim);font-size:12.5px;}
+
+  ::-webkit-scrollbar{width:7px;}
+  ::-webkit-scrollbar-thumb{background:var(--forest-line);border-radius:4px;}
+
+  /* ---------- login gate ---------- */
+  #app{display:none;}
+  #app.unlocked{display:flex;}
+  #login-overlay{position:fixed;inset:0;z-index:100;background:var(--forest-deep);display:flex;align-items:center;justify-content:center;}
+  #login-box{background:var(--card);border:1px solid var(--hairline);border-radius:14px;padding:36px 32px;width:320px;text-align:center;}
+  #login-box .brand-ic{font-size:26px;margin-bottom:8px;}
+  #login-box h1{font-family:'Fraunces',serif;font-size:20px;font-weight:600;margin:0 0 6px 0;}
+  #login-box p{font-size:12px;color:var(--parchment-dim);margin:0 0 20px 0;line-height:1.5;}
+  #login-box input{width:100%;margin-bottom:10px;text-align:center;letter-spacing:0.5px;}
+  #login-error{color:var(--crimson);font-size:11.5px;min-height:16px;margin-bottom:6px;}
+  #login-box .btn{width:100%;margin-top:4px;}
+
+  /* ---------- read-only (guest) mode ---------- */
+  body.read-only .add-form{display:none !important;}
+  body.read-only .icon-btn{display:none !important;}
+  body.read-only .s-estado, body.read-only .s-fecha, body.read-only .s-notas{
+    pointer-events:none;background:transparent;border-color:transparent;opacity:0.9;appearance:none;
+  }
+  #guest-banner{display:none;background:rgba(217,164,65,0.14);border-bottom:1px solid rgba(217,164,65,0.3);color:var(--amber);
+    text-align:center;padding:7px 12px;font-size:11.5px;font-family:'JetBrains Mono',monospace;}
+  body.read-only #guest-banner{display:block;}
+</style>
+</head>
+<body>
+
+<div id="login-overlay">
+  <div id="login-box">
+    <div class="brand-ic">🌲</div>
+    <h1>Montseny</h1>
+    <p>Introduce la clave de acceso para entrar al control del proyecto.</p>
+    <input type="password" id="login-key" placeholder="Clave de acceso" autocomplete="off">
+    <div id="login-error"></div>
+    <button class="btn btn-primary" id="login-submit">Entrar</button>
+  </div>
+</div>
+
+<div id="guest-banner">Modo invitado — solo lectura. La sección de Tareas no está disponible.</div>
+<div id="app">
+
+  <nav id="nav">
+    <div class="brand">
+      <h1>Montseny</h1>
+      <span>Control del proyecto</span>
+    </div>
+    <div class="nav-btn active" data-view="muestreo"><span class="ic">🧪</span>Puntos de muestreo<span class="badge" id="nb-muestreo">15</span></div>
+    <div class="nav-btn" data-view="referencia"><span class="ic">📍</span>Otros puntos<span class="badge" id="nb-referencia">0</span></div>
+    <div class="nav-btn" data-view="inventario"><span class="ic">🎒</span>Inventario<span class="badge" id="nb-inventario">0</span></div>
+    <div class="nav-btn" id="nav-tareas" data-view="tareas"><span class="ic">✅</span>Tareas<span class="badge" id="nb-tareas">0</span></div>
+    <div class="nav-btn" data-view="dispositivos"><span class="ic">📡</span>Sensores y cámaras<span class="badge" id="nb-dispositivos">0</span></div>
+    <div class="nav-btn" data-view="resultados"><span class="ic">📊</span>Resultados de estudios<span class="badge" id="nb-resultados">0</span></div>
+    <div class="spacer"></div>
+    <a id="earth-link" href="https://earth.google.com/earth/d/1BZzCflz0kXkQKWV-KSOU4dcl6Pep4H2e?usp=sharing" target="_blank" rel="noopener">🌍 Ver proyecto en Google Earth ↗</a>
+    <div id="data-tools">
+      <div class="eyebrow">Datos</div>
+      <button class="data-btn" id="export-btn">⬇ Exportar JSON</button>
+      <label class="data-btn" id="import-btn" for="import-file" style="cursor:pointer;">⬆ Importar JSON</label>
+      <input type="file" id="import-file" accept="application/json,.json" style="display:none;">
+      <div id="import-status"></div>
+    </div>
+    <button class="data-btn" id="logout-btn" style="margin-top:10px;">⎋ Cerrar sesión</button>
+  </nav>
+
+  <main id="main">
+
+    <!-- PUNTOS DE MUESTREO -->
+    <section class="view active" id="view-muestreo">
+      <div class="view-head">
+        <h2>Puntos de muestreo</h2>
+        <p>Marca el estado y añade notas de cada visita.</p>
+      </div>
+      <div class="add-form" style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:160px;"><label>Fecha de muestreo</label><input type="date" id="bulk-fecha" value="2026-06-29"></div>
+        <button class="btn btn-primary" id="bulk-mark">✓ Marcar todos como muestreados</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Punto</th><th>Coordenadas</th><th>Estado</th><th>Última visita</th><th>Notas</th><th></th></tr></thead>
+          <tbody id="sampling-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- OTROS PUNTOS (equipo / infraestructura / otros) -->
+    <section class="view" id="view-referencia">
+      <div class="view-head">
+        <h2>Otros puntos de referencia</h2>
+        <p>Puntos georreferenciados que no son de muestreo: equipos instalados, infraestructura de la finca u otros elementos a ubicar.</p>
+      </div>
+      <div class="add-form">
+        <div class="grid">
+          <div><label>Nombre</label><input type="text" id="ref-nombre" placeholder="Ej. Caseta de herramientas"></div>
+          <div><label>Tipo</label>
+            <select id="ref-tipo">
+              <option value="equipo">Equipo</option>
+              <option value="infraestructura">Infraestructura</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+          <div><label>Latitud</label><input type="text" id="ref-lat" placeholder="Ej. 41.72055"></div>
+          <div><label>Longitud</label><input type="text" id="ref-lon" placeholder="Ej. 2.33456"></div>
+        </div>
+        <textarea id="ref-notas" placeholder="Notas (opcional)"></textarea>
+        <div style="margin-top:10px;"><button class="btn btn-primary" id="ref-add">+ Añadir punto</button></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nombre</th><th>Tipo</th><th>Coordenadas</th><th>Notas</th><th></th></tr></thead>
+          <tbody id="reference-tbody"></tbody>
+        </table>
+        <div id="reference-empty"></div>
+      </div>
+    </section>
+
+    <!-- INVENTARIO -->
+    <section class="view" id="view-inventario">
+      <div class="view-head">
+        <h2>Inventario de herramientas</h2>
+        <p>Equipo disponible para las tareas de campo del proyecto.</p>
+      </div>
+      <div class="add-form">
+        <div class="grid">
+          <div><label>Nombre</label><input type="text" id="inv-nombre" placeholder="Ej. Motosierra"></div>
+          <div><label>Cantidad</label><input type="number" id="inv-cantidad" min="0" value="1"></div>
+          <div><label>Estado</label>
+            <select id="inv-estado"><option value="disponible">Disponible</option><option value="enuso">En uso</option><option value="mantenimiento">Mantenimiento</option><option value="fuera">Fuera de servicio</option></select>
+          </div>
+          <div><label>Ubicación</label><input type="text" id="inv-ubicacion" placeholder="Ej. Caseta principal"></div>
+        </div>
+        <textarea id="inv-notas" placeholder="Notas (opcional)"></textarea>
+        <div style="margin-top:10px;"><button class="btn btn-primary" id="inv-add">+ Añadir herramienta</button></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nombre</th><th>Cant.</th><th>Estado</th><th>Ubicación</th><th>Notas</th><th></th></tr></thead>
+          <tbody id="inventory-tbody"></tbody>
+        </table>
+        <div id="inventory-empty"></div>
+      </div>
+    </section>
+
+    <!-- TAREAS -->
+    <section class="view" id="view-tareas">
+      <div class="view-head">
+        <h2>Tareas</h2>
+        <p>Trabajo pendiente y realizado en la parcela.</p>
+      </div>
+      <div class="add-form">
+        <div class="grid">
+          <div style="grid-column:span 2;"><label>Título</label><input type="text" id="task-titulo" placeholder="Ej. Revisar cámara trampa sector norte"></div>
+          <div><label>Fecha límite</label><input type="date" id="task-fecha"></div>
+        </div>
+        <textarea id="task-desc" placeholder="Descripción (opcional)"></textarea>
+        <div style="margin-top:10px;"><button class="btn btn-primary" id="task-add">+ Añadir tarea</button></div>
+      </div>
+      <div class="task-col">
+        <div>
+          <div class="section-title">Por hacer</div>
+          <div id="tasks-pending"></div>
+        </div>
+        <div>
+          <div class="section-title">Completadas</div>
+          <div id="tasks-done"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SENSORES Y CAMARAS -->
+    <section class="view" id="view-dispositivos">
+      <div class="view-head">
+        <h2>Sensores y cámaras</h2>
+        <p>Dispositivos instalados o pendientes de instalar en la parcela.</p>
+      </div>
+      <div class="add-form">
+        <div class="grid">
+          <div><label>Tipo</label><select id="dev-tipo"><option value="sensor">Sensor</option><option value="camara">Cámara</option></select></div>
+          <div><label>Nombre / ID</label><input type="text" id="dev-nombre" placeholder="Ej. Cámara trampa 01"></div>
+          <div><label>Estado</label><select id="dev-estado"><option value="pendiente">Pendiente</option><option value="instalado">Instalado</option><option value="mantenimiento">Mantenimiento</option></select></div>
+          <div><label>Ubicación / punto de referencia</label><input type="text" id="dev-ubicacion" placeholder="Ej. Cerca de UM_7"></div>
+          <div><label>Fecha instalación</label><input type="date" id="dev-fecha"></div>
+        </div>
+        <textarea id="dev-notas" placeholder="Notas (opcional)"></textarea>
+        <div style="margin-top:10px;"><button class="btn btn-primary" id="dev-add">+ Añadir dispositivo</button></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tipo</th><th>Nombre / ID</th><th>Estado</th><th>Ubicación</th><th>Instalación</th><th>Notas</th><th></th></tr></thead>
+          <tbody id="devices-tbody"></tbody>
+        </table>
+        <div id="devices-empty"></div>
+      </div>
+    </section>
+
+    <!-- RESULTADOS DE ESTUDIOS -->
+    <section class="view" id="view-resultados">
+      <div class="view-head">
+        <h2>Resultados de estudios</h2>
+        <p>Hallazgos y resultados de los análisis realizados sobre la parcela.</p>
+      </div>
+      <div class="add-form">
+        <div class="grid">
+          <div style="grid-column:span 2;"><label>Título</label><input type="text" id="res-titulo" placeholder="Ej. Análisis de suelo — sector Prat3"></div>
+          <div><label>Fecha</label><input type="date" id="res-fecha"></div>
+          <div><label>Responsable</label><input type="text" id="res-responsable" placeholder="Ej. Equipo de biología"></div>
+          <div><label>Punto relacionado (opcional)</label>
+            <select id="res-punto"><option value="">— Ninguno —</option></select>
+          </div>
+          <div><label>Enlace al informe (opcional)</label><input type="text" id="res-enlace" placeholder="https://..."></div>
+        </div>
+        <textarea id="res-resumen" placeholder="Resumen de los resultados / hallazgos" style="min-height:64px;"></textarea>
+        <div style="margin-top:10px;"><button class="btn btn-primary" id="res-add">+ Añadir resultado</button></div>
+      </div>
+      <div id="results-list"></div>
+    </section>
+
+  </main>
+</div>
+<script>
+(function(){
+
+const API_BASE = '/api';
+let token = null;
+let role = null; // 'admin' | 'guest'
+let isGuest = false;
+
+let sampling = [];
+let referencePoints = [];
+let inventory = [];
+let tasks = [];
+let devices = [];
+let studyResults = [];
+
+let editingRef = null, editingInv = null, editingDev = null, editingTask = null, editingRes = null;
+
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtDate(iso){ if(!iso) return '—'; const d=new Date(iso+'T00:00:00'); return d.toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'}); }
+function estadoLabel(e){
+  return {disponible:'Disponible', enuso:'En uso', mantenimiento:'Mantenimiento', fuera:'Fuera de servicio', instalado:'Instalado', pendiente:'Pendiente'}[e] || e;
+}
+
+// ---------------- API + auth ----------------
+async function api(path, options){
+  options = options || {};
+  const headers = Object.assign({'Content-Type':'application/json'}, options.headers || {});
+  if(token) headers['Authorization'] = 'Bearer ' + token;
+  let res;
+  try{
+    res = await fetch(API_BASE + path, Object.assign({}, options, {headers}));
+  }catch(networkErr){
+    throw new Error('No se pudo conectar con el servidor.');
+  }
+  if(res.status === 401){
+    sessionExpired();
+    throw new Error('Sesión expirada.');
+  }
+  if(!res.ok){
+    let msg = 'Error del servidor (' + res.status + ')';
+    try{ const j = await res.json(); if(j && j.error) msg = j.error; }catch(e){}
+    throw new Error(msg);
+  }
+  if(res.status === 204) return null;
+  return res.json();
+}
+
+function showToast(msg, ok){
+  let el = document.getElementById('save-toast');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'save-toast';
+    el.style.cssText = 'position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:120;padding:7px 16px;border-radius:20px;font-size:11.5px;font-family:JetBrains Mono,monospace;transition:opacity .25s;';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.background = ok ? 'rgba(127,160,107,0.92)' : 'rgba(192,80,58,0.94)';
+  el.style.color = '#101a12';
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>{ el.style.opacity = '0'; }, 2200);
+}
+function showApiError(err){ showToast('⚠ ' + (err && err.message ? err.message : 'Ocurrió un error'), false); }
+
+function sessionExpired(){
+  token = null; role = null; isGuest = false;
+  localStorage.removeItem('montseny_token');
+  localStorage.removeItem('montseny_role');
+  document.body.classList.remove('read-only');
+  document.getElementById('app').classList.remove('unlocked');
+  document.getElementById('login-overlay').style.display = 'flex';
+  document.getElementById('login-error').textContent = 'Tu sesión expiró. Vuelve a introducir la clave.';
+}
+
+async function tryLogin(){
+  const val = document.getElementById('login-key').value;
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+  try{
+    const res = await fetch(API_BASE + '/login', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({key: val})
+    });
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok){
+      errEl.textContent = data.error || 'Clave incorrecta.';
+      return;
+    }
+    token = data.token; role = data.role; isGuest = (role === 'guest');
+    localStorage.setItem('montseny_token', token);
+    localStorage.setItem('montseny_role', role);
+    onAuthenticated();
+  }catch(err){
+    errEl.textContent = 'No se pudo conectar con el servidor.';
+  }
+}
+document.getElementById('login-submit').addEventListener('click', tryLogin);
+document.getElementById('login-key').addEventListener('keydown', (e)=>{ if(e.key==='Enter') tryLogin(); });
+
+document.getElementById('logout-btn').addEventListener('click', ()=>{
+  sessionExpired();
+  document.getElementById('login-error').textContent = '';
+  document.getElementById('login-key').value = '';
+});
+
+function onAuthenticated(){
+  document.body.classList.toggle('read-only', isGuest);
+  const navTareas = document.getElementById('nav-tareas');
+  const importBtn = document.getElementById('import-btn');
+  if(isGuest){
+    if(navTareas) navTareas.style.display = 'none';
+    if(importBtn) importBtn.style.display = 'none';
+  } else {
+    if(navTareas) navTareas.style.display = '';
+    if(importBtn) importBtn.style.display = '';
+  }
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('app').classList.add('unlocked');
+  loadAll();
+}
+
+// Try to resume a session from a previously stored token. If it's expired
+// or invalid, the first API call below will bounce back to the login screen.
+(function boot(){
+  const storedToken = localStorage.getItem('montseny_token');
+  const storedRole = localStorage.getItem('montseny_role');
+  if(storedToken && storedRole){
+    token = storedToken; role = storedRole; isGuest = (role === 'guest');
+    onAuthenticated();
+  }
+})();
+
+// ---------------- nav ----------------
+document.querySelectorAll('.nav-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-'+btn.dataset.view).classList.add('active');
+  });
+});
+
+// ---------------- load everything ----------------
+async function loadAll(){
+  try{
+    const [samplingData, refData, invData, devData, resData] = await Promise.all([
+      api('/sampling'),
+      api('/reference-points'),
+      api('/inventory'),
+      api('/devices'),
+      api('/results')
+    ]);
+    sampling = samplingData;
+    referencePoints = refData;
+    inventory = invData;
+    devices = devData;
+    studyResults = resData;
+    tasks = isGuest ? [] : await api('/tasks');
+    populatePointDropdown();
+    renderAll();
+  }catch(err){
+    showApiError(err);
+  }
+}
+
+function populatePointDropdown(){
+  const sel = document.getElementById('res-punto');
+  if(!sel) return;
+  const opts = ['<option value="">— Ninguno —</option>'];
+  sampling.forEach(p=> opts.push(`<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)} (muestreo)</option>`));
+  referencePoints.forEach(p=> opts.push(`<option value="${escapeHtml(p.nombre)}">${escapeHtml(p.nombre)} (${REF_TYPE_LABEL[p.tipo]||p.tipo})</option>`));
+  sel.innerHTML = opts.join('');
+}
+
+// ---------------- render: puntos de muestreo ----------------
+function renderSampling(){
+  document.getElementById('nb-muestreo').textContent = sampling.length;
+  const tbody = document.getElementById('sampling-tbody');
+  const dis = isGuest ? 'disabled' : '';
+  tbody.innerHTML = sampling.map((p,i)=>`
+    <tr data-i="${i}">
+      <td style="font-weight:500;">${escapeHtml(p.name)}</td>
+      <td class="coord">${p.lat.toFixed(5)}, ${p.lon.toFixed(5)}<br><a class="maplink" href="https://www.google.com/maps?q=${p.lat},${p.lon}" target="_blank" rel="noopener">Ver en Google Maps ↗</a></td>
+      <td>
+        <select class="s-estado" ${dis}>
+          <option value="pendiente" ${p.estado==='pendiente'?'selected':''}>Pendiente</option>
+          <option value="muestreado" ${p.estado==='muestreado'?'selected':''}>Muestreado</option>
+        </select>
+      </td>
+      <td><input type="date" class="s-fecha" value="${p.fecha||''}" ${dis}></td>
+      <td><input type="text" class="s-notas" value="${escapeHtml(p.notas)}" placeholder="Notas..." ${dis}></td>
+      <td></td>
+    </tr>
+  `).join('');
+  tbody.querySelectorAll('tr').forEach(tr=>{
+    const i = +tr.dataset.i;
+    const p = sampling[i];
+    tr.querySelector('.s-estado').addEventListener('change', async e=>{
+      const val = e.target.value; p.estado = val;
+      try{ await api('/sampling/'+encodeURIComponent(p.name), {method:'PATCH', body: JSON.stringify({estado: val})}); showToast('✓ Guardado', true); }
+      catch(err){ showApiError(err); }
+    });
+    tr.querySelector('.s-fecha').addEventListener('change', async e=>{
+      const val = e.target.value; p.fecha = val;
+      try{ await api('/sampling/'+encodeURIComponent(p.name), {method:'PATCH', body: JSON.stringify({fecha: val})}); showToast('✓ Guardado', true); }
+      catch(err){ showApiError(err); }
+    });
+    tr.querySelector('.s-notas').addEventListener('change', async e=>{
+      const val = e.target.value; p.notas = val;
+      try{ await api('/sampling/'+encodeURIComponent(p.name), {method:'PATCH', body: JSON.stringify({notas: val})}); showToast('✓ Guardado', true); }
+      catch(err){ showApiError(err); }
+    });
+  });
+}
+document.getElementById('bulk-mark').addEventListener('click', async ()=>{
+  const fecha = document.getElementById('bulk-fecha').value || '2026-06-29';
+  try{
+    sampling = await api('/sampling/bulk-mark', {method:'POST', body: JSON.stringify({fecha})});
+    renderSampling();
+    showToast('✓ Guardado', true);
+  }catch(err){ showApiError(err); }
+});
+
+// ---------------- render: otros puntos ----------------
+const REF_TYPE_LABEL = {equipo:'🎒 Equipo', infraestructura:'🏗️ Infraestructura', otro:'📍 Otro'};
+function renderReferencePoints(){
+  document.getElementById('nb-referencia').textContent = referencePoints.length;
+  const tbody = document.getElementById('reference-tbody');
+  const emptyEl = document.getElementById('reference-empty');
+  if(referencePoints.length===0){
+    tbody.innerHTML=''; emptyEl.innerHTML = '<div id="empty">Aún no hay otros puntos registrados.</div>';
+    return;
+  }
+  emptyEl.innerHTML='';
+  tbody.innerHTML = referencePoints.map(p=>{
+    if(editingRef === p.id){
+      return `<tr data-id="${p.id}">
+        <td><input type="text" class="e-nombre" value="${escapeHtml(p.nombre)}"></td>
+        <td><select class="e-tipo">
+          <option value="equipo" ${p.tipo==='equipo'?'selected':''}>Equipo</option>
+          <option value="infraestructura" ${p.tipo==='infraestructura'?'selected':''}>Infraestructura</option>
+          <option value="otro" ${p.tipo==='otro'?'selected':''}>Otro</option>
+        </select></td>
+        <td><input type="text" class="e-lat" value="${p.lat}" style="margin-bottom:4px;"><input type="text" class="e-lon" value="${p.lon}"></td>
+        <td><textarea class="e-notas">${escapeHtml(p.notas)}</textarea></td>
+        <td style="white-space:nowrap;"><button class="icon-btn e-save" title="Guardar">✓</button><button class="icon-btn e-cancel" title="Cancelar">✕</button></td>
+      </tr>`;
+    }
+    return `<tr data-id="${p.id}">
+      <td style="font-weight:500;">${escapeHtml(p.nombre)}</td>
+      <td>${REF_TYPE_LABEL[p.tipo] || p.tipo}</td>
+      <td class="coord">${p.lat.toFixed(5)}, ${p.lon.toFixed(5)}<br><a class="maplink" href="https://www.google.com/maps?q=${p.lat},${p.lon}" target="_blank" rel="noopener">Ver en Google Maps ↗</a></td>
+      <td style="color:var(--parchment-dim);font-size:12px;">${escapeHtml(p.notas)}</td>
+      <td style="white-space:nowrap;"><button class="icon-btn e-edit" title="Editar">✎</button><button class="icon-btn e-del" title="Eliminar">✕</button></td>
+    </tr>`;
+  }).join('');
+
+  tbody.querySelectorAll('tr').forEach(tr=>{
+    const id = tr.dataset.id;
+    const edit = tr.querySelector('.e-edit');
+    const del = tr.querySelector('.e-del');
+    const save = tr.querySelector('.e-save');
+    const cancel = tr.querySelector('.e-cancel');
+    if(edit) edit.addEventListener('click', ()=>{ editingRef = id; renderReferencePoints(); });
+    if(cancel) cancel.addEventListener('click', ()=>{ editingRef = null; renderReferencePoints(); });
+    if(del) del.addEventListener('click', async ()=>{
+      try{
+        await api('/reference-points/'+id, {method:'DELETE'});
+        referencePoints = referencePoints.filter(x=>x.id!==id);
+        renderReferencePoints(); populatePointDropdown();
+        showToast('✓ Eliminado', true);
+      }catch(err){ showApiError(err); }
+    });
+    if(save) save.addEventListener('click', async ()=>{
+      const lat = parseFloat(tr.querySelector('.e-lat').value);
+      const lon = parseFloat(tr.querySelector('.e-lon').value);
+      const payload = {
+        nombre: tr.querySelector('.e-nombre').value.trim(),
+        tipo: tr.querySelector('.e-tipo').value,
+        notas: tr.querySelector('.e-notas').value.trim()
+      };
+      if(!isNaN(lat)) payload.lat = lat;
+      if(!isNaN(lon)) payload.lon = lon;
+      try{
+        const updated = await api('/reference-points/'+id, {method:'PATCH', body: JSON.stringify(payload)});
+        const idx = referencePoints.findIndex(x=>x.id===id);
+        referencePoints[idx] = updated;
+        editingRef = null;
+        renderReferencePoints(); populatePointDropdown();
+        showToast('✓ Guardado', true);
+      }catch(err){ showApiError(err); }
+    });
+  });
+}
+document.getElementById('ref-add').addEventListener('click', async ()=>{
+  const nombre = document.getElementById('ref-nombre').value.trim();
+  const lat = parseFloat(document.getElementById('ref-lat').value);
+  const lon = parseFloat(document.getElementById('ref-lon').value);
+  if(!nombre || isNaN(lat) || isNaN(lon)) return;
+  const payload = {
+    nombre, tipo: document.getElementById('ref-tipo').value, lat, lon,
+    notas: document.getElementById('ref-notas').value.trim()
+  };
+  try{
+    const created = await api('/reference-points', {method:'POST', body: JSON.stringify(payload)});
+    referencePoints.push(created);
+    document.getElementById('ref-nombre').value='';
+    document.getElementById('ref-lat').value='';
+    document.getElementById('ref-lon').value='';
+    document.getElementById('ref-notas').value='';
+    renderReferencePoints(); populatePointDropdown();
+    showToast('✓ Guardado', true);
+  }catch(err){ showApiError(err); }
+});
+
+// ---------------- render: inventario ----------------
+function renderInventory(){
+  document.getElementById('nb-inventario').textContent = inventory.length;
+  const tbody = document.getElementById('inventory-tbody');
+  const emptyEl = document.getElementById('inventory-empty');
+  if(inventory.length===0){
+    tbody.innerHTML=''; emptyEl.innerHTML = '<div id="empty">Aún no hay herramientas registradas.</div>';
+    return;
+  }
+  emptyEl.innerHTML='';
+  tbody.innerHTML = inventory.map(item=>{
+    if(editingInv === item.id){
+      return `<tr data-id="${item.id}">
+        <td><input type="text" class="e-nombre" value="${escapeHtml(item.nombre)}"></td>
+        <td><input type="number" class="e-cantidad" min="0" value="${item.cantidad}"></td>
+        <td><select class="e-estado">
+          <option value="disponible" ${item.estado==='disponible'?'selected':''}>Disponible</option>
+          <option value="enuso" ${item.estado==='enuso'?'selected':''}>En uso</option>
+          <option value="mantenimiento" ${item.estado==='mantenimiento'?'selected':''}>Mantenimiento</option>
+          <option value="fuera" ${item.estado==='fuera'?'selected':''}>Fuera de servicio</option>
+        </select></td>
+        <td><input type="text" class="e-ubicacion" value="${escapeHtml(item.ubicacion)}"></td>
+        <td><textarea class="e-notas">${escapeHtml(item.notas)}</textarea></td>
+        <td style="white-space:nowrap;"><button class="icon-btn e-save" title="Guardar">✓</button><button class="icon-btn e-cancel" title="Cancelar">✕</button></td>
+      </tr>`;
+    }
+    return `<tr data-id="${item.id}">
+      <td style="font-weight:500;">${escapeHtml(item.nombre)}</td>
+      <td>${item.cantidad}</td>
+      <td><span class="pill ${item.estado}">${estadoLabel(item.estado)}</span></td>
+      <td>${escapeHtml(item.ubicacion)}</td>
+      <td style="color:var(--parchment-dim);font-size:12px;">${escapeHtml(item.notas)}</td>
+      <td style="white-space:nowrap;"><button class="icon-btn e-edit" title="Editar">✎</button><button class="icon-btn e-del" title="Eliminar">✕</button></td>
+    </tr>`;
+  }).join('');
+
+  tbody.querySelectorAll('tr').forEach(tr=>{
+    const id = tr.dataset.id;
+    const edit = tr.querySelector('.e-edit');
+    const del = tr.querySelector('.e-del');
+    const save = tr.querySelector('.e-save');
+    const cancel = tr.querySelector('.e-cancel');
+    if(edit) edit.addEventListener('click', ()=>{ editingInv = id; renderInventory(); });
+    if(cancel) cancel.addEventListener('click', ()=>{ editingInv = null; renderInventory(); });
+    if(del) del.addEventListener('click', async ()=>{
+      try{
+        await api('/inventory/'+id, {method:'DELETE'});
+        inventory = inventory.filter(x=>x.id!==id);
+        renderInventory();
+        showToast('✓ Eliminado', true);
+      }catch(err){ showApiError(err); }
+    });
+    if(save) save.addEventListener('click', async ()=>{
+      const payload = {
+        nombre: tr.querySelector('.e-nombre').value.trim(),
+        cantidad: +tr.querySelector('.e-cantidad').value || 0,
+        estado: tr.querySelector('.e-estado').value,
+        ubicacion: tr.querySelector('.e-ubicacion').value.trim(),
+        notas: tr.querySelector('.e-notas').value.trim()
+      };
+      try{
+        const updated = await api('/inventory/'+id, {method:'PATCH', body: JSON.stringify(payload)});
+        const idx = inventory.findIndex(x=>x.id===id);
+        inventory[idx] = updated;
+        editingInv = null;
+        renderInventory();
+        showToast('✓ Guardado', true);
+      }catch(err){ showApiError(err); }
+    });
+  });
+}
+document.getElementById('inv-add').addEventListener('click', async ()=>{
+  const nombre = document.getElementById('inv-nombre').value.trim();
+  if(!nombre) return;
+  const payload = {
+    nombre,
+    cantidad: +document.getElementById('inv-cantidad').value || 1,
+    estado: document.getElementById('inv-estado').value,
+    ubicacion: document.getElementById('inv-ubicacion').value.trim(),
+    notas: document.getElementById('inv-notas').value.trim()
+  };
+  try{
+    const created = await api('/inventory', {method:'POST', body: JSON.stringify(payload)});
+    inventory.push(created);
+    document.getElementById('inv-nombre').value='';
+    document.getElementById('inv-cantidad').value=1;
+    document.getElementById('inv-ubicacion').value='';
+    document.getElementById('inv-notas').value='';
+    renderInventory();
+    showToast('✓ Guardado', true);
+  }catch(err){ showApiError(err); }
+});
+
+// ---------------- render: tareas ----------------
+function renderTasks(){
+  const pending = tasks.filter(t=>!t.done).sort((a,b)=>(a.fecha||'9999').localeCompare(b.fecha||'9999'));
+  const done = tasks.filter(t=>t.done).sort((a,b)=> new Date(b.done_at||0) - new Date(a.done_at||0));
+  document.getElementById('nb-tareas').textContent = pending.length;
+
+  const cardHtml = (t)=>{
+    if(editingTask === t.id){
+      return `<div class="task-card" data-id="${t.id}">
+        <input type="text" class="e-titulo" value="${escapeHtml(t.titulo)}" style="margin-bottom:6px;">
+        <textarea class="e-desc" placeholder="Descripción" style="margin-bottom:6px;">${escapeHtml(t.descripcion)}</textarea>
+        <input type="date" class="e-fecha" value="${t.fecha||''}" style="margin-bottom:8px;">
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary e-save" style="flex:1;">Guardar</button>
+          <button class="btn btn-ghost e-cancel" style="flex:1;">Cancelar</button>
+        </div>
+      </div>`;
+    }
+    return `
+    <div class="task-card ${t.done?'done':''}" data-id="${t.id}">
+      <div class="row">
+        <input type="checkbox" class="t-check" ${t.done?'checked':''}>
+        <div class="top-row">
+          <div>
+            <div class="title">${escapeHtml(t.titulo)}</div>
+            ${t.descripcion?`<div class="desc">${escapeHtml(t.descripcion)}</div>`:''}
+            <div class="meta">${t.fecha?('Vence: '+fmtDate(t.fecha)):'Sin fecha límite'}</div>
+          </div>
+          <div style="white-space:nowrap;">
+            <button class="icon-btn t-edit" title="Editar">✎</button>
+            <button class="icon-btn t-del" title="Eliminar">✕</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  };
+
+  document.getElementById('tasks-pending').innerHTML = pending.length ? pending.map(cardHtml).join('') : '<div id="empty">No hay tareas pendientes.</div>';
+  document.getElementById('tasks-done').innerHTML = done.length ? done.map(cardHtml).join('') : '<div id="empty">Aún no hay tareas completadas.</div>';
+
+  document.querySelectorAll('.task-card').forEach(card=>{
+    const id = card.dataset.id;
+    const check = card.querySelector('.t-check');
+    if(check) check.addEventListener('change', async (e)=>{
+      const doneVal = e.target.checked;
+      try{
+        const updated = await api('/tasks/'+id, {method:'PATCH', body: JSON.stringify({done: doneVal, done_at: doneVal ? new Date().toISOString() : null})});
+        const idx = tasks.findIndex(x=>x.id===id);
+        tasks[idx] = updated;
+        renderTasks();
+        showToast('✓ Guardado', true);
+      }catch(err){ showApiError(err); e.target.checked = !doneVal; }
+    });
+    const editBtn = card.querySelector('.t-edit');
+    if(editBtn) editBtn.addEventListener('click', ()=>{ editingTask = id; renderTasks(); });
+    const delBtn = card.querySelector('.t-del');
+    if(delBtn) delBtn.addEventListener('click', async ()=>{
+      try{
+        await api('/tasks/'+id, {method:'DELETE'});
+        tasks = tasks.filter(x=>x.id!==id);
+        renderTasks();
+        showToast('✓ Eliminado', true);
+      }catch(err){ showApiError(err); }
+    });
+    const cancelBtn = card.querySelector('.e-cancel');
+    if(cancelBtn) cancelBtn.addEventListener('click', ()=>{ editingTask = null; renderTasks(); });
+    const saveBtn = card.querySelector('.e-save');
+    if(saveBtn) saveBtn.addEventListener('click', async ()=>{
+      const payload = {
+        titulo: card.querySelector('.e-titulo').value.trim(),
+        descripcion: card.querySelector('.e-desc').value.trim(),
+        fecha: card.querySelector('.e-fecha').value || null
+      };
+      try{
+        const updated = await api('/tasks/'+id, {method:'PATCH', body: JSON.stringify(payload)});
+        const idx = tasks.findIndex(x=>x.id===id);
+        tasks[idx] = updated;
+        editingTask = null;
+        renderTasks();
+        showToast('✓ Guardado', true);
+      }catch(err){ showApiError(err); }
+    });
+  });
+}
+document.getElementById('task-add').addEventListener('click', async ()=>{
+  const titulo = document.getElementById('task-titulo').value.trim();
+  if(!titulo) return;
+  const payload = {
+    titulo,
+    descripcion: document.getElementById('task-desc').value.trim(),
+    fecha: document.getElementById('task-fecha').value || null,
+    done: false
+  };
+  try{
+    const created = await api('/tasks', {method:'POST', body: JSON.stringify(payload)});
+    tasks.push(created);
+    document.getElementById('task-titulo').value='';
+    document.getElementById('task-desc').value='';
+    document.getElementById('task-fecha').value='';
+    renderTasks();
+    showToast('✓ Guardado', true);
+  }catch(err){ showApiError(err); }
+});
+
+// ---------------- render: sensores y cámaras ----------------
+function renderDevices(){
+  document.getElementById('nb-dispositivos').textContent = devices.length;
+  const tbody = document.getElementById('devices-tbody');
+  const emptyEl = document.getElementById('devices-empty');
+  if(devices.length===0){
+    tbody.innerHTML=''; emptyEl.innerHTML = '<div id="empty">Aún no hay sensores ni cámaras registrados.</div>';
+    return;
+  }
+  emptyEl.innerHTML='';
+  tbody.innerHTML = devices.map(d=>{
+    if(editingDev === d.id){
+      return `<tr data-id="${d.id}">
+        <td><select class="e-tipo"><option value="sensor" ${d.tipo==='sensor'?'selected':''}>Sensor</option><option value="camara" ${d.tipo==='camara'?'selected':''}>Cámara</option></select></td>
+        <td><input type="text" class="e-nombre" value="${escapeHtml(d.nombre)}"></td>
+        <td><select class="e-estado">
+          <option value="pendiente" ${d.estado==='pendiente'?'selected':''}>Pendiente</option>
+          <option value="instalado" ${d.estado==='instalado'?'selected':''}>Instalado</option>
+          <option value="mantenimiento" ${d.estado==='mantenimiento'?'selected':''}>Mantenimiento</option>
+        </select></td>
+        <td><input type="text" class="e-ubicacion" value="${escapeHtml(d.ubicacion)}"></td>
+        <td><input type="date" class="e-fecha" value="${d.fecha||''}"></td>
+        <td><textarea class="e-notas">${escapeHtml(d.notas)}</textarea></td>
+        <td style="white-space:nowrap;"><button class="icon-btn e-save" title="Guardar">✓</button><button class="icon-btn e-cancel" title="Cancelar">✕</button></td>
+      </tr>`;
+    }
+    return `<tr data-id="${d.id}">
+      <td>${d.tipo==='camara'?'📷 Cámara':'📡 Sensor'}</td>
+      <td style="font-weight:500;">${escapeHtml(d.nombre)}</td>
+      <td><span class="pill ${d.estado}">${estadoLabel(d.estado)}</span></td>
+      <td>${escapeHtml(d.ubicacion)}</td>
+      <td class="coord">${d.fecha?fmtDate(d.fecha):'—'}</td>
+      <td style="color:var(--parchment-dim);font-size:12px;">${escapeHtml(d.notas)}</td>
+      <td style="white-space:nowrap;"><button class="icon-btn e-edit" title="Editar">✎</button><button class="icon-btn e-del" title="Eliminar">✕</button></td>
+    </tr>`;
+  }).join('');
+
+  tbody.querySelectorAll('tr').forEach(tr=>{
+    const id = tr.dataset.id;
+    const edit = tr.querySelector('.e-edit');
+    const del = tr.querySelector('.e-del');
+    const save = tr.querySelector('.e-save');
+    const cancel = tr.querySelector('.e-cancel');
+    if(edit) edit.addEventListener('click', ()=>{ editingDev = id; renderDevices(); });
+    if(cancel) cancel.addEventListener('click', ()=>{ editingDev = null; renderDevices(); });
+    if(del) del.addEventListener('click', async ()=>{
+      try{
+        await api('/devices/'+id, {method:'DELETE'});
+        devices = devices.filter(x=>x.id!==id);
+        renderDevices();
+        showToast('✓ Eliminado', true);
+      }catch(err){ showApiError(err); }
+    });
+    if(save) save.addEventListener('click', async ()=>{
+      const payload = {
+        tipo: tr.querySelector('.e-tipo').value,
+        nombre: tr.querySelector('.e-nombre').value.trim(),
+        estado: tr.querySelector('.e-estado').value,
+        ubicacion: tr.querySelector('.e-ubicacion').value.trim(),
+        fecha: tr.querySelector('.e-fecha').value || null,
+        notas: tr.querySelector('.e-notas').value.trim()
+      };
+      try{
+        const updated = await api('/devices/'+id, {method:'PATCH', body: JSON.stringify(payload)});
+        const idx = devices.findIndex(x=>x.id===id);
+        devices[idx] = updated;
+        editingDev = null;
+        renderDevices();
+        showToast('✓ Guardado', true);
+      }catch(err){ showApiError(err); }
+    });
+  });
+}
+document.getElementById('dev-add').addEventListener('click', async ()=>{
+  const nombre = document.getElementById('dev-nombre').value.trim();
+  if(!nombre) return;
+  const payload = {
+    tipo: document.getElementById('dev-tipo').value,
+    nombre,
+    estado: document.getElementById('dev-estado').value,
+    ubicacion: document.getElementById('dev-ubicacion').value.trim(),
+    fecha: document.getElementById('dev-fecha').value || null,
+    notas: document.getElementById('dev-notas').value.trim()
+  };
+  try{
+    const created = await api('/devices', {method:'POST', body: JSON.stringify(payload)});
+    devices.push(created);
+    document.getElementById('dev-nombre').value='';
+    document.getElementById('dev-ubicacion').value='';
+    document.getElementById('dev-fecha').value='';
+    document.getElementById('dev-notas').value='';
+    renderDevices();
+    showToast('✓ Guardado', true);
+  }catch(err){ showApiError(err); }
+});
+
+// ---------------- render: resultados de estudios ----------------
+function renderResults(){
+  document.getElementById('nb-resultados').textContent = studyResults.length;
+  const wrap = document.getElementById('results-list');
+  const sorted = [...studyResults].sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+  if(sorted.length===0){
+    wrap.innerHTML = '<div class="table-wrap"><div id="empty">Aún no hay resultados registrados.</div></div>';
+    return;
+  }
+  wrap.innerHTML = sorted.map(r=>{
+    if(editingRes === r.id){
+      return `<div class="task-card" data-id="${r.id}">
+        <input type="text" class="e-titulo" placeholder="Título" value="${escapeHtml(r.titulo)}" style="margin-bottom:6px;">
+        <div class="grid" style="margin-bottom:6px;">
+          <div><label>Fecha</label><input type="date" class="e-fecha" value="${r.fecha||''}"></div>
+          <div><label>Responsable</label><input type="text" class="e-responsable" value="${escapeHtml(r.responsable)}"></div>
+          <div><label>Enlace</label><input type="text" class="e-enlace" value="${escapeHtml(r.enlace)}"></div>
+        </div>
+        <textarea class="e-resumen" placeholder="Resumen" style="margin-bottom:8px;min-height:60px;">${escapeHtml(r.resumen)}</textarea>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary e-save" style="flex:1;">Guardar</button>
+          <button class="btn btn-ghost e-cancel" style="flex:1;">Cancelar</button>
+        </div>
+      </div>`;
+    }
+    return `<div class="task-card" data-id="${r.id}">
+      <div class="top-row">
+        <div>
+          <div class="title" style="font-family:'Fraunces',serif;font-size:15px;">${escapeHtml(r.titulo)}</div>
+          <div class="meta">${r.fecha?fmtDate(r.fecha):'sin fecha'}${r.responsable?' · '+escapeHtml(r.responsable):''}${r.punto?' · 📍 '+escapeHtml(r.punto):''}</div>
+        </div>
+        <div style="white-space:nowrap;">
+          <button class="icon-btn r-edit" title="Editar">✎</button>
+          <button class="icon-btn r-del" title="Eliminar">✕</button>
+        </div>
+      </div>
+      ${r.resumen?`<div class="desc" style="margin-top:8px;">${escapeHtml(r.resumen)}</div>`:''}
+      ${r.enlace?`<div class="meta" style="margin-top:8px;"><a class="maplink" href="${escapeHtml(r.enlace)}" target="_blank" rel="noopener">Ver informe completo ↗</a></div>`:''}
+    </div>`;
+  }).join('');
+
+  wrap.querySelectorAll('.task-card').forEach(card=>{
+    const id = card.dataset.id;
+    const editBtn = card.querySelector('.r-edit');
+    if(editBtn) editBtn.addEventListener('click', ()=>{ editingRes = id; renderResults(); });
+    const delBtn = card.querySelector('.r-del');
+    if(delBtn) delBtn.addEventListener('click', async ()=>{
+      try{
+        await api('/results/'+id, {method:'DELETE'});
+        studyResults = studyResults.filter(x=>x.id!==id);
+        renderResults();
+        showToast('✓ Eliminado', true);
+      }catch(err){ showApiError(err); }
+    });
+    const cancelBtn = card.querySelector('.e-cancel');
+    if(cancelBtn) cancelBtn.addEventListener('click', ()=>{ editingRes = null; renderResults(); });
+    const saveBtn = card.querySelector('.e-save');
+    if(saveBtn) saveBtn.addEventListener('click', async ()=>{
+      const payload = {
+        titulo: card.querySelector('.e-titulo').value.trim(),
+        fecha: card.querySelector('.e-fecha').value || null,
+        responsable: card.querySelector('.e-responsable').value.trim(),
+        enlace: card.querySelector('.e-enlace').value.trim(),
+        resumen: card.querySelector('.e-resumen').value.trim()
+      };
+      try{
+        const updated = await api('/results/'+id, {method:'PATCH', body: JSON.stringify(payload)});
+        const idx = studyResults.findIndex(x=>x.id===id);
+        studyResults[idx] = updated;
+        editingRes = null;
+        renderResults();
+        showToast('✓ Guardado', true);
+      }catch(err){ showApiError(err); }
+    });
+  });
+}
+document.getElementById('res-add').addEventListener('click', async ()=>{
+  const titulo = document.getElementById('res-titulo').value.trim();
+  if(!titulo) return;
+  const payload = {
+    titulo,
+    fecha: document.getElementById('res-fecha').value || null,
+    responsable: document.getElementById('res-responsable').value.trim(),
+    punto: document.getElementById('res-punto').value,
+    enlace: document.getElementById('res-enlace').value.trim(),
+    resumen: document.getElementById('res-resumen').value.trim()
+  };
+  try{
+    const created = await api('/results', {method:'POST', body: JSON.stringify(payload)});
+    studyResults.push(created);
+    document.getElementById('res-titulo').value='';
+    document.getElementById('res-fecha').value='';
+    document.getElementById('res-responsable').value='';
+    document.getElementById('res-punto').value='';
+    document.getElementById('res-enlace').value='';
+    document.getElementById('res-resumen').value='';
+    renderResults();
+    showToast('✓ Guardado', true);
+  }catch(err){ showApiError(err); }
+});
+
+// ---------------- export / import ----------------
+document.getElementById('export-btn').addEventListener('click', async ()=>{
+  try{
+    const data = await api('/export');
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0,10);
+    a.href = url; a.download = `montseny-datos-${stamp}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }catch(err){ showApiError(err); }
+});
+document.getElementById('import-file').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async ()=>{
+    let data;
+    try{ data = JSON.parse(reader.result); }
+    catch(err){ showToast('⚠ El archivo no es un JSON válido.', false); e.target.value=''; return; }
+    try{
+      await api('/import', {method:'POST', body: JSON.stringify(data)});
+      showToast('✓ Datos importados', true);
+      await loadAll();
+    }catch(err){ showApiError(err); }
+    e.target.value = '';
+  };
+  reader.onerror = ()=>{ showToast('⚠ No se pudo leer el archivo.', false); };
+  reader.readAsText(file);
+});
+
+function renderAll(){
+  renderSampling();
+  renderReferencePoints();
+  renderInventory();
+  renderTasks();
+  renderDevices();
+  renderResults();
+}
+
+})();
+</script>
+</body>
+</html>
