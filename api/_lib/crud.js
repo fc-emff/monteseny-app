@@ -1,10 +1,13 @@
 import { supabase } from './supabase.js';
 import { getRoleFromRequest } from './auth.js';
 
-// Handles GET (list) and POST (create) for a table.
-// requireAdminForRead: true means guests can't even read this resource
-// (used for /api/tasks, per the project's access rules).
-export function listCreateHandler(table, { requireAdminForRead = false } = {}) {
+// One function per resource instead of two (list+create AND item), to stay
+// under Vercel Hobby's 12-serverless-functions-per-deployment limit.
+// GET  /api/<resource>          -> list
+// POST /api/<resource>          -> create
+// PATCH  /api/<resource>?id=X   -> update
+// DELETE /api/<resource>?id=X   -> delete
+export function resourceHandler(table, { requireAdminForRead = false } = {}) {
   return async function handler(req, res) {
     const role = getRoleFromRequest(req);
     if (!role) return res.status(401).json({ error: 'No autenticado' });
@@ -12,7 +15,9 @@ export function listCreateHandler(table, { requireAdminForRead = false } = {}) {
       return res.status(403).json({ error: 'No autorizado' });
     }
 
-    if (req.method === 'GET') {
+    const { id } = req.query;
+
+    if (req.method === 'GET' && !id) {
       const { data, error } = await supabase
         .from(table)
         .select('*')
@@ -21,7 +26,7 @@ export function listCreateHandler(table, { requireAdminForRead = false } = {}) {
       return res.status(200).json(data);
     }
 
-    if (req.method === 'POST') {
+    if (req.method === 'POST' && !id) {
       if (role !== 'admin') return res.status(403).json({ error: 'Solo lectura' });
       const { data, error } = await supabase
         .from(table)
@@ -32,23 +37,7 @@ export function listCreateHandler(table, { requireAdminForRead = false } = {}) {
       return res.status(201).json(data);
     }
 
-    res.setHeader('Allow', 'GET, POST');
-    return res.status(405).json({ error: 'Método no permitido' });
-  };
-}
-
-// Handles PATCH (update) and DELETE for a single row identified by :id.
-export function itemHandler(table, { requireAdminForRead = false } = {}) {
-  return async function handler(req, res) {
-    const role = getRoleFromRequest(req);
-    if (!role) return res.status(401).json({ error: 'No autenticado' });
-    if (requireAdminForRead && role !== 'admin') {
-      return res.status(403).json({ error: 'No autorizado' });
-    }
-
-    const { id } = req.query;
-
-    if (req.method === 'PATCH' || req.method === 'PUT') {
+    if ((req.method === 'PATCH' || req.method === 'PUT') && id) {
       if (role !== 'admin') return res.status(403).json({ error: 'Solo lectura' });
       const { data, error } = await supabase
         .from(table)
@@ -60,14 +49,14 @@ export function itemHandler(table, { requireAdminForRead = false } = {}) {
       return res.status(200).json(data);
     }
 
-    if (req.method === 'DELETE') {
+    if (req.method === 'DELETE' && id) {
       if (role !== 'admin') return res.status(403).json({ error: 'Solo lectura' });
       const { error } = await supabase.from(table).delete().eq('id', id);
       if (error) return res.status(500).json({ error: error.message });
       return res.status(204).end();
     }
 
-    res.setHeader('Allow', 'PATCH, DELETE');
-    return res.status(405).json({ error: 'Método no permitido' });
+    res.setHeader('Allow', 'GET, POST, PATCH, DELETE');
+    return res.status(400).json({ error: 'Solicitud inválida' });
   };
 }

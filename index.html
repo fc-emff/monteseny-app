@@ -552,17 +552,17 @@ function renderSampling(){
     const p = sampling[i];
     tr.querySelector('.s-estado').addEventListener('change', async e=>{
       const val = e.target.value; p.estado = val;
-      try{ await api('/sampling/'+encodeURIComponent(p.name), {method:'PATCH', body: JSON.stringify({estado: val})}); showToast('✓ Guardado', true); }
+      try{ await api('/sampling?name='+encodeURIComponent(p.name), {method:'PATCH', body: JSON.stringify({estado: val})}); showToast('✓ Guardado', true); }
       catch(err){ showApiError(err); }
     });
     tr.querySelector('.s-fecha').addEventListener('change', async e=>{
       const val = e.target.value; p.fecha = val;
-      try{ await api('/sampling/'+encodeURIComponent(p.name), {method:'PATCH', body: JSON.stringify({fecha: val})}); showToast('✓ Guardado', true); }
+      try{ await api('/sampling?name='+encodeURIComponent(p.name), {method:'PATCH', body: JSON.stringify({fecha: val})}); showToast('✓ Guardado', true); }
       catch(err){ showApiError(err); }
     });
     tr.querySelector('.s-notas').addEventListener('change', async e=>{
       const val = e.target.value; p.notas = val;
-      try{ await api('/sampling/'+encodeURIComponent(p.name), {method:'PATCH', body: JSON.stringify({notas: val})}); showToast('✓ Guardado', true); }
+      try{ await api('/sampling?name='+encodeURIComponent(p.name), {method:'PATCH', body: JSON.stringify({notas: val})}); showToast('✓ Guardado', true); }
       catch(err){ showApiError(err); }
     });
   });
@@ -570,7 +570,7 @@ function renderSampling(){
 document.getElementById('bulk-mark').addEventListener('click', async ()=>{
   const fecha = document.getElementById('bulk-fecha').value || '2026-06-29';
   try{
-    sampling = await api('/sampling/bulk-mark', {method:'POST', body: JSON.stringify({fecha})});
+    sampling = await api('/sampling?action=bulk-mark', {method:'POST', body: JSON.stringify({fecha})});
     renderSampling();
     showToast('✓ Guardado', true);
   }catch(err){ showApiError(err); }
@@ -620,7 +620,7 @@ function renderReferencePoints(){
     if(cancel) cancel.addEventListener('click', ()=>{ editingRef = null; renderReferencePoints(); });
     if(del) del.addEventListener('click', async ()=>{
       try{
-        await api('/reference-points/'+id, {method:'DELETE'});
+        await api('/reference-points?id='+id, {method:'DELETE'});
         referencePoints = referencePoints.filter(x=>x.id!==id);
         renderReferencePoints(); populatePointDropdown();
         showToast('✓ Eliminado', true);
@@ -637,7 +637,7 @@ function renderReferencePoints(){
       if(!isNaN(lat)) payload.lat = lat;
       if(!isNaN(lon)) payload.lon = lon;
       try{
-        const updated = await api('/reference-points/'+id, {method:'PATCH', body: JSON.stringify(payload)});
+        const updated = await api('/reference-points?id='+id, {method:'PATCH', body: JSON.stringify(payload)});
         const idx = referencePoints.findIndex(x=>x.id===id);
         referencePoints[idx] = updated;
         editingRef = null;
@@ -714,7 +714,7 @@ function renderInventory(){
     if(cancel) cancel.addEventListener('click', ()=>{ editingInv = null; renderInventory(); });
     if(del) del.addEventListener('click', async ()=>{
       try{
-        await api('/inventory/'+id, {method:'DELETE'});
+        await api('/inventory?id='+id, {method:'DELETE'});
         inventory = inventory.filter(x=>x.id!==id);
         renderInventory();
         showToast('✓ Eliminado', true);
@@ -729,7 +729,7 @@ function renderInventory(){
         notas: tr.querySelector('.e-notas').value.trim()
       };
       try{
-        const updated = await api('/inventory/'+id, {method:'PATCH', body: JSON.stringify(payload)});
+        const updated = await api('/inventory?id='+id, {method:'PATCH', body: JSON.stringify(payload)});
         const idx = inventory.findIndex(x=>x.id===id);
         inventory[idx] = updated;
         editingInv = null;
@@ -807,7 +807,7 @@ function renderTasks(){
     if(check) check.addEventListener('change', async (e)=>{
       const doneVal = e.target.checked;
       try{
-        const updated = await api('/tasks/'+id, {method:'PATCH', body: JSON.stringify({done: doneVal, done_at: doneVal ? new Date().toISOString() : null})});
+        const updated = await api('/tasks?id='+id, {method:'PATCH', body: JSON.stringify({done: doneVal, done_at: doneVal ? new Date().toISOString() : null})});
         const idx = tasks.findIndex(x=>x.id===id);
         tasks[idx] = updated;
         renderTasks();
@@ -819,7 +819,7 @@ function renderTasks(){
     const delBtn = card.querySelector('.t-del');
     if(delBtn) delBtn.addEventListener('click', async ()=>{
       try{
-        await api('/tasks/'+id, {method:'DELETE'});
+        await api('/tasks?id='+id, {method:'DELETE'});
         tasks = tasks.filter(x=>x.id!==id);
         renderTasks();
         showToast('✓ Eliminado', true);
@@ -835,7 +835,7 @@ function renderTasks(){
         fecha: card.querySelector('.e-fecha').value || null
       };
       try{
-        const updated = await api('/tasks/'+id, {method:'PATCH', body: JSON.stringify(payload)});
+        const updated = await api('/tasks?id='+id, {method:'PATCH', body: JSON.stringify(payload)});
         const idx = tasks.findIndex(x=>x.id===id);
         tasks[idx] = updated;
         editingTask = null;
@@ -912,7 +912,7 @@ function renderDevices(){
     if(cancel) cancel.addEventListener('click', ()=>{ editingDev = null; renderDevices(); });
     if(del) del.addEventListener('click', async ()=>{
       try{
-        await api('/devices/'+id, {method:'DELETE'});
+        await api('/devices?id='+id, {method:'DELETE'});
         devices = devices.filter(x=>x.id!==id);
         renderDevices();
         showToast('✓ Eliminado', true);
@@ -928,7 +928,7 @@ function renderDevices(){
         notas: tr.querySelector('.e-notas').value.trim()
       };
       try{
-        const updated = await api('/devices/'+id, {method:'PATCH', body: JSON.stringify(payload)});
+        const updated = await api('/devices?id='+id, {method:'PATCH', body: JSON.stringify(payload)});
         const idx = devices.findIndex(x=>x.id===id);
         devices[idx] = updated;
         editingDev = null;
@@ -1009,7 +1009,7 @@ function renderResults(){
     const delBtn = card.querySelector('.r-del');
     if(delBtn) delBtn.addEventListener('click', async ()=>{
       try{
-        await api('/results/'+id, {method:'DELETE'});
+        await api('/results?id='+id, {method:'DELETE'});
         studyResults = studyResults.filter(x=>x.id!==id);
         renderResults();
         showToast('✓ Eliminado', true);
@@ -1027,7 +1027,7 @@ function renderResults(){
         resumen: card.querySelector('.e-resumen').value.trim()
       };
       try{
-        const updated = await api('/results/'+id, {method:'PATCH', body: JSON.stringify(payload)});
+        const updated = await api('/results?id='+id, {method:'PATCH', body: JSON.stringify(payload)});
         const idx = studyResults.findIndex(x=>x.id===id);
         studyResults[idx] = updated;
         editingRes = null;
